@@ -597,7 +597,7 @@ button, .pcard { -webkit-touch-callout: none; }
 var G = (typeof window !== "undefined") ? window : globalThis;
 
 /* 版本号：每次改动更新（web/ 目录实时生效，刷新即最新） */
-G.VERSION = "2026-08-19 11:24";
+G.VERSION = "2026-08-19 11:38";
 
 /* 随机 */
 G.rand = function (a, b) { return a + Math.random() * (b - a); };
@@ -4355,16 +4355,20 @@ LPC.frame = function (img, dir, frame, fw, fh) {
   return c;
 };
 
-/** 组装一个角色帧（多个组件叠在一起，64×64 输出） */
+/** 组装一个角色帧（多个组件叠在一起，64×64 输出）
+ * 带缓存：按 charKey+dir+frame 缓存合成结果，避免每帧重建（手机性能优化） */
+LPC._frameCache = {};
 LPC.assemble = function (charKey, dir, frame) {
   var preset = LPC.presets[charKey] || LPC.presets.player;
   if (!preset) return null;
+  var ck = charKey + "|" + (dir || "down") + "|" + (frame || 0);
+  if (LPC._frameCache[ck]) return LPC._frameCache[ck];
   var fw = 64, fh = 64;
   var c = document.createElement("canvas");
   c.width = fw; c.height = fh;
   var ctx = c.getContext("2d");
   // 按 LPC zPos 层级绘制（body10 < legs20 < dress30/robe35/bodice45/chainmail50）：
-// 衣服/裙子画在腿之上、身体之下层，才能盖住腿露出裙摆
+  // 衣服/裙子画在腿之上、身体之下层，才能盖住腿露出裙摆
   var order = ["body", "legs", "feet", "chest", "head", "ears", "hair", "facial", "eyes"];
   order.forEach(function (layer) {
     var key = preset[layer];
@@ -4374,6 +4378,7 @@ LPC.assemble = function (charKey, dir, frame) {
     var fc = LPC.frame(img, dir, frame, fw, fh);
     ctx.drawImage(fc, 0, 0);
   });
+  LPC._frameCache[ck] = c;
   return c;
 };
 
@@ -4435,7 +4440,7 @@ function drawLPCHeadshot(ctx, charKey, canvas, scale) {
 /* ---------- LPC 角色预设（按背景设定.md 配置性别/种族/年龄/衣着） ----------
  * 2026-08-19 全面差异化：精灵加 ears_elven，女性用 *_female 体，老人用 *_elderly，
  * 老板/渔夫/牧师等加胡子(facial)，按职业配衣服颜色。 */
-LPC.def("player",   { body: "body_male_light", head: "head_male_light", legs: "legs", feet: "feet", hair: "bangs" });
+LPC.def("player",   { body: "body_male_light", head: "head_male_light", chest: "chest_shirt_blue", legs: "legs", feet: "feet", hair: "bangs" });
 LPC.def("boss",     { body: "body_male_light", head: "head_male_plump", chest: "chest_leather_black", legs: "legs", feet: "feet", hair: "hair_plain_darkbrown", facial: "beard_trimmed_darkbrown" });
 LPC.def("drunk",    { body: "body_male_light", head: "head_male_light", chest: "chest_shirt_green", legs: "legs", feet: "feet", hair: "bangs", facial: "beard_shadow_lightbrown" });
 LPC.def("villager", { body: "body_female_light", head: "head_female_light", chest: "chest_shirt_female_red", legs: "legs", feet: "feet", hair: "long_female" });
