@@ -536,6 +536,143 @@ button, .pcard { -webkit-touch-callout: none; }
   opacity: .3;
 }
 
+/* ================ 🎮 RPGUI 风格（2026-08-19，参考 RPGUI 框架） ================ */
+
+/* RPG 风格按钮：像素浮雕效果 */
+.pix-btn {
+  position: relative;
+  font-family: inherit;
+  font-size: 12px;
+  color: #e8dcc8;
+  background: #3a2a58;
+  border: none;
+  border-image: none;
+  padding: 7px 16px;
+  cursor: pointer;
+  image-rendering: pixelated;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.5);
+  /* 3D 浮雕边框（纯 CSS，无图片） */
+  box-shadow:
+    inset -2px -2px 0 #1a0e30,
+    inset 2px 2px 0 #5a4a78,
+    0 0 0 2px #2a1a44;
+}
+.pix-btn:hover {
+  background: #4a3a68;
+  box-shadow:
+    inset -2px -2px 0 #2a1a40,
+    inset 2px 2px 0 #6a5a88,
+    0 0 0 2px #3a2a54;
+}
+.pix-btn:active {
+  background: #2a1a44;
+  box-shadow:
+    inset 2px 2px 0 #1a0e30,
+    inset -2px -2px 0 #4a3a68,
+    0 0 0 2px #2a1a44;
+  padding: 8px 16px 6px;
+}
+.pix-btn.small { padding: 4px 10px; font-size: 11px; }
+.pix-btn.small:active { padding: 5px 10px 3px; }
+.pix-btn.danger {
+  background: #4a1a1a;
+  box-shadow:
+    inset -2px -2px 0 #2a0a0a,
+    inset 2px 2px 0 #6a3a3a,
+    0 0 0 2px #3a1a1a;
+}
+.pix-btn.danger:hover { background: #5a2a2a; }
+.pix-btn.danger:active { background: #3a1010; }
+
+/* RPG 风格面板：framed 边框效果 */
+.panel {
+  background: linear-gradient(180deg, #1a1228, #0f0a1c);
+  border: 3px solid #4a3a6b;
+  border-image: none;
+  box-shadow:
+    0 0 0 1px #6a5a8b,
+    inset 0 0 0 1px #2a1a44,
+    0 0 30px rgba(60,40,100,.15);
+  padding: 16px 20px;
+  min-width: 320px;
+  max-width: min(92vw, 560px);
+  max-height: 84vh;
+  overflow-y: auto;
+  border-radius: 0;
+}
+.panel h2 {
+  color: #ffd75e;
+  font-size: 15px;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #4a3a6b;
+  text-shadow: 0 0 8px rgba(255,215,94,.15);
+}
+.panel .row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13px; color: #c8b88a; }
+.panel .row:nth-child(even) { background: rgba(255,255,255,.03); }
+.panel .row span:last-child { color: #e8dcc8; }
+.panel .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.panel p.flavor { font-size: 12px; color: #9a8fb8; line-height: 1.7; margin: 6px 0; }
+
+/* RPG 风格对话框 */
+.dialog {
+  max-width: 480px;
+  border: 3px solid #6a5a8b;
+  box-shadow:
+    0 0 0 1px #8a7aab,
+    inset 0 0 0 1px #3a2a5b,
+    0 0 40px rgba(80,60,140,.12);
+  border-radius: 0;
+}
+.dialog .npc { color: #ffd75e; font-weight: bold; }
+.dialog .text { font-size: 13px; line-height: 1.8; color: #e8dcc8; margin: 8px 0; }
+
+/* RPG 风格底部文本框 */
+#speech-box .speech-frame {
+  background: #120e20;
+  border: 3px solid #5a4a7b;
+  box-shadow:
+    0 0 0 1px #7a6a9b,
+    inset 0 0 0 1px #2a1a4b,
+    0 0 30px rgba(60,40,100,.12);
+  border-radius: 0;
+  border-width: 3px 0 0 0;
+}
+#speech-box .speech-name { color: #ffd75e; text-shadow: 0 0 8px rgba(255,215,94,.2); }
+#speech-box .speech-content { color: #e8dcc8; }
+
+/* RPG 风格 HUD 顶栏 */
+#hud {
+  background: linear-gradient(180deg, #1a1228, #0f0a1c);
+  border: 2px solid #3a2a5b;
+  box-shadow:
+    0 0 0 1px #5a4a7b,
+    inset 0 0 0 1px #1a0e30;
+  border-radius: 0;
+  padding: 6px 12px;
+}
+.hud-chip {
+  background: rgba(0,0,0,.4);
+  border: 1px solid #3a2a5b;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,.3);
+  border-radius: 0;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #c8b88a;
+}
+.hud-tag {
+  background: #120e20;
+  border: 1px solid #2a1a44;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #9a8fb8;
+}
+.pix-btn.small {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
 </style>
 </head>
 <body>
@@ -598,7 +735,7 @@ button, .pcard { -webkit-touch-callout: none; }
 var G = (typeof window !== "undefined") ? window : globalThis;
 
 /* 版本号：每次改动更新（web/ 目录实时生效，刷新即最新） */
-G.VERSION = "2026-08-19 12:30";
+G.VERSION = "2026-08-19 12:49";
 
 /* 随机 */
 G.rand = function (a, b) { return a + Math.random() * (b - a); };
