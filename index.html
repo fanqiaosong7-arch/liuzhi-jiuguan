@@ -597,7 +597,7 @@ button, .pcard { -webkit-touch-callout: none; }
 var G = (typeof window !== "undefined") ? window : globalThis;
 
 /* 版本号：每次改动更新（web/ 目录实时生效，刷新即最新） */
-G.VERSION = "2026-08-19 10:46";
+G.VERSION = "2026-08-19 11:24";
 
 /* 随机 */
 G.rand = function (a, b) { return a + Math.random() * (b - a); };
@@ -5527,6 +5527,7 @@ var UI = {
       if (e.key === "Enter") document.getElementById("name-ok").click();
     });
     document.getElementById("name-ok").addEventListener("click", function () {
+      self.close();  // 先关遮罩（UI.say 走底部框不会自动关）
       callback((input.value || "").trim() || defaultValue);
     });
   },
@@ -5543,6 +5544,7 @@ var UI = {
     var input = document.getElementById("text-input");
     input.focus();
     document.getElementById("text-ok").addEventListener("click", function () {
+      self.close();  // 先关遮罩（UI.say 走底部框不会自动关）
       callback((input.value || "").trim());
     });
     document.getElementById("text-cancel").addEventListener("click", function () { this.close(); }.bind(this));
@@ -6462,6 +6464,8 @@ var UI = {
 
   /* ---------- 台词（文字冒险风：底部文本框，非遮罩） ---------- */
   say: function (npcName, text) {
+    // 先关掉可能开着的遮罩（UI.say 走底部文本框，不占用 overlay）
+    if (this.overlay && this.overlay.classList.contains("open")) this.close();
     // 尝试从 NPC_NAMES 反查 charKey（用于显示头像）
     var charKey = null;
     if (typeof NPC_NAMES !== "undefined") {
