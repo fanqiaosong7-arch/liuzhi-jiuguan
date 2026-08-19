@@ -1,0 +1,665 @@
+/* style.css — 柳枝酒馆 Web 版样式（像素风，零外部资源） */
+
+:root {
+  --bg: #0d0a12;
+  --panel: #1c1530;
+  --panel2: #2a1f3d;
+  --line: #4a3a6b;
+  --gold: #ffd75e;
+  --red: #e5484d;
+  --green: #46d160;
+  --cyan: #5cd6d6;
+  --cream: #f2e8cf;
+  --dim: #9a8fb8;
+  --wood: #a9743f;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Microsoft JhengHei", "WenQuanYi Micro Hei", "Noto Sans", sans-serif;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- 画布：低分辨率 + 像素放大 ---- */
+#game {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 4px solid var(--line);
+  box-shadow: 0 0 0 2px #000, 0 0 40px rgba(255, 215, 94, .12);
+  background: #000;
+}
+
+/* ---- HUD 顶栏 ---- */
+#hud {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 8px;
+  width: min(96vw, 900px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 30;
+  text-shadow: 2px 2px 0 #000;
+}
+#hud .hud-left, #hud .hud-right { display: flex; gap: 6px; align-items: center; pointer-events: auto; }
+.hud-chip {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.hud-chip:hover { border-color: var(--gold); }
+.hud-chip b { color: var(--gold); }
+.hud-tag {
+  background: rgba(20, 14, 34, .85);
+  border: 2px solid var(--line);
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--dim);
+}
+
+/* ---- 像素按钮 ---- */
+.pix-btn {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--cream);
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,215,94,.3);
+  padding: 5px 12px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  image-rendering: pixelated;
+  transition: all .15s;
+  border-radius: 4px;
+}
+.pix-btn:hover { border-color: var(--gold); color: #fff; background: rgba(255,215,94,.08); box-shadow: 0 0 8px rgba(255,215,94,.1); }
+.pix-btn:active { transform: translate(1px, 1px); }
+.pix-btn.small { font-size: 11px; padding: 3px 8px; }
+.pix-btn.danger:hover { border-color: var(--red); color: var(--red); background: rgba(255,0,0,.05); }
+.pix-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---- 底部提示 ---- */
+#hint {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 8px;
+  color: var(--dim);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 #000;
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* ---- 覆盖层与面板 ---- */
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 3, 10, .72);
+  z-index: 40;
+}
+#overlay.open { display: flex; }
+
+.panel {
+  background: linear-gradient(145deg, rgba(28,18,50,.98), rgba(18,10,36,.98));
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 20px rgba(255,215,94,.08), inset 0 0 40px rgba(255,215,94,.03);
+  padding: 16px 20px;
+  min-width: 320px;
+  max-width: min(92vw, 560px);
+  max-height: 84vh;
+  overflow-y: auto;
+  border-radius: 10px;
+}
+.panel h2 {
+  color: var(--gold);
+  font-size: 15px;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255,215,94,.25);
+  padding-bottom: 6px;
+  text-shadow: 0 0 8px rgba(255,215,94,.15);
+}
+.panel .row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13px; }
+.panel .row:nth-child(even) { background: rgba(255,255,255,.03); border-radius: 3px; }
+.panel .row span:last-child { color: var(--cream); }
+.panel .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.panel p.flavor { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 6px 0; }
+
+.money-plus { color: var(--green); }
+.money-minus { color: var(--red); }
+.money-zero { color: var(--gold); }
+
+/* ---- 对话框（RPGUI 风格） ---- */
+.dialog { max-width: 440px; }
+.dialog .npc { color: var(--gold); font-weight: bold; }
+.dialog .text { font-size: 13px; line-height: 1.8; color: var(--cream); margin: 8px 0; }
+.dialog .text:first-of-type { margin-top: 4px; }
+/* 对话头像：左侧大头像 + 右侧文字/按钮（2026-08-18） */
+.dialog .talk-body { display: flex; gap: 12px; align-items: flex-start; margin-top: 4px; }
+.dialog .portrait { flex: 0 0 auto; background: rgba(0,0,0,.25); border: 2px solid rgba(255,255,255,.12);
+  border-radius: 8px; padding: 6px; }
+.dialog .portrait canvas { image-rendering: pixelated; display: block; }
+.dialog .talk-text { flex: 1 1 auto; min-width: 0; }
+
+/* ---- 游戏界面 ---- */
+.game-screen { min-width: 420px; max-width: min(94vw, 640px); }
+.game-screen .table-line { font-size: 13px; margin: 6px 0; }
+.game-screen .cards { display: flex; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
+.pcard {
+  display: inline-block;
+  min-width: 40px;
+  height: 56px;
+  padding: 4px 6px;
+  background: #f5efe0;
+  border: 2px solid #3a2f1e;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.35;
+  box-shadow: 2px 2px 0 rgba(0,0,0,.5);
+}
+.pcard.red { color: #c22; }
+.pcard.back { background: repeating-linear-gradient(45deg, #7a2f8f 0 6px, #57206a 6px 12px); color: transparent; }
+.pcard .suit { font-size: 18px; display: block; }
+
+/* ---- 贪吃蛇 ---- */
+#snake-board { background: #101318; border: 3px solid var(--line); image-rendering: pixelated; display: block; margin: 8px auto; }
+
+/* ---- 标题画面 ---- */
+#title-screen { text-align: center; }
+#title-screen .logo { font-size: 22px; color: var(--gold); letter-spacing: 4px; text-shadow: 3px 3px 0 #000; }
+#title-screen .sub { font-size: 12px; color: var(--dim); margin: 8px 0 18px; }
+
+/* ---- 滚动条 ---- */
+.panel::-webkit-scrollbar { width: 8px; }
+.panel::-webkit-scrollbar-thumb { background: var(--line); }
+
+/* ---- 小屏适配 ---- */
+@media (max-width: 640px) {
+  .game-screen { min-width: 94vw; }
+  .pcard { min-width: 34px; height: 48px; font-size: 12px; }
+  .pcard .suit { font-size: 15px; }
+}
+
+/* ================= 移动端触摸控制 ================= */
+
+/* 触摸基础防护 */
+html, body { touch-action: none; -webkit-tap-highlight-color: transparent; }
+#game { touch-action: none; -webkit-user-select: none; }
+button, .pcard { -webkit-touch-callout: none; }
+
+/* 触摸层容器：不挡画布，只暴露按钮 */
+#touch {
+  display: none;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;       /* 高于 speech-box(45)，方向键不被对话框遮住 */
+  -webkit-user-select: none;
+  user-select: none;
+}
+#touch.visible { display: block; }
+/* 覆盖层（对话框/游戏界面）打开时隐藏触摸层（speech-box 不触发此规则） */
+#overlay.open ~ #touch { display: none !important; }
+#touch .tbtn, #touch .tbtn * { pointer-events: auto; }
+
+.tbtn {
+  pointer-events: auto;
+  touch-action: none;
+  font-family: inherit;
+  background: rgba(24, 16, 40, .78);
+  border: 2px solid var(--line);
+  color: var(--cream);
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 2px 2px 0 rgba(0,0,0,.5);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.tbtn span { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+.tbtn.pressed {
+  background: rgba(255, 215, 94, .35);
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translate(1px, 1px);
+}
+
+/* 方向键：左下角十字 */
+#touch-dpad {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, 54px);
+  grid-template-rows: repeat(2, 54px);
+  gap: 4px;
+}
+#touch-dpad .tbtn:nth-child(1) { grid-column: 2; grid-row: 1; }  /* ▲ */
+#touch-dpad .tbtn:nth-child(2) { grid-column: 1; grid-row: 2; }  /* ◀ */
+#touch-dpad .tbtn:nth-child(3) { grid-column: 2; grid-row: 2; }  /* ▼ */
+#touch-dpad .tbtn:nth-child(4) { grid-column: 3; grid-row: 2; }  /* ▶ */
+
+/* 交互/菜单：右下角 */
+#touch-actions {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+#t-interact { width: 78px; height: 78px; border-radius: 50%; border-width: 3px; }
+#t-interact .tbtn-icon { font-size: 26px; }
+#t-menu { width: 54px; height: 54px; border-radius: 8px; }
+#t-menu .tbtn-icon { font-size: 20px; }
+
+/* ================= 小屏 / 触屏适配 ================= */
+@media (max-width: 700px), (pointer: coarse) {
+  #game { border-width: 2px; }
+  #hud { top: 6px; }
+  .hud-tag { display: none; }              /* 手机上省空间 */
+  .hud-chip { font-size: 12px; padding: 4px 8px; }
+  #hint { display: none; }                 /* 底部提示被触摸按钮替代 */
+  .panel { min-width: 0; width: min(94vw, 420px); padding: 12px 14px; }
+  .game-screen { min-width: 0; width: min(94vw, 480px); }
+  .pix-btn { padding: 10px 14px; font-size: 15px; }
+  .pix-btn.small { padding: 6px 10px; font-size: 12px; }
+  input[type="text"] { font-size: 18px !important; padding: 10px !important; }
+  .pcard { min-width: 40px; height: 54px; font-size: 13px; }
+  .pcard .suit { font-size: 17px; }
+  .dialog .text, .panel .row, .table-line { font-size: 14px; }
+  /* 游戏内按钮换行不挤压 */
+  .actions { gap: 6px; }
+  .actions .pix-btn { flex: 1 1 auto; min-width: 0; }
+}
+@media (max-height: 480px) {
+  /* 横屏小屏：压缩面板留出画布 */
+  .panel { max-height: 80vh; }
+  #touch-dpad { left: 8px; bottom: 8px; }
+  #touch-actions { right: 8px; bottom: 8px; }
+  .tbtn { transform: scale(.92); }
+}
+
+/* ================= 时间/心情/台词条 ================= */
+
+/* HUD 时钟（时间+心情，桌面与移动端都显示） */
+#hud-clock { font-size: 12px; cursor: default; }
+#hud-clock:hover { border-color: var(--gold); }
+@media (max-width: 700px), (pointer: coarse) {
+  #hud-clock { font-size: 11px; padding: 4px 8px; max-width: 46vw; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  #hud-scene, #hud-diff { display: none; }   /* 手机上隐藏次要标签，保留时钟 */
+}
+
+/* 交互提示气泡（DOM，替代 canvas 小字，放大不虚） */
+#prompt-bubble {
+  position: fixed;
+  z-index: 36;
+  display: none;
+  background: rgba(10, 6, 18, .92);
+  border: 2px solid var(--gold);
+  color: var(--gold);
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 5px 10px;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translateX(-50%) translateY(-100%);
+  box-shadow: 2px 2px 0 rgba(0,0,0,.5);
+}
+
+/* 底部大文本框（文字冒险风格，2026-08-18）— 不遮罩，背景继续动 */
+#speech-box {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 45;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(20,12,40,.96) 70%, rgba(20,12,40,.6) 90%, transparent);
+  padding: 12px 12px 8px;
+  display: flex;
+  justify-content: center;
+}
+#speech-box .speech-frame {
+  max-width: min(94vw, 640px);
+  width: 100%;
+  background: rgba(28, 18, 50, .95);
+  border: 2px solid var(--gold);
+  border-width: 2px 2px 0 2px;
+  border-radius: 12px 12px 0 0;
+  padding: 14px 16px 10px;
+  pointer-events: auto;
+  box-shadow: 0 -4px 20px rgba(255,215,94,.08), inset 0 0 30px rgba(255,215,94,.04);
+}
+#speech-box .speech-body {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+#speech-box .speech-portrait {
+  flex: 0 0 auto;
+  background: rgba(0,0,0,.3);
+  border: 2px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  padding: 6px;
+}
+#speech-box .speech-portrait canvas {
+  image-rendering: pixelated;
+  display: block;
+}
+#speech-box .speech-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#speech-box .speech-name {
+  color: var(--gold);
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+#speech-box .speech-content {
+  color: var(--cream);
+  font-size: 13px;
+  line-height: 1.7;
+}
+#speech-box .speech-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+#speech-box .speech-actions .pix-btn {
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+/* 底部台词条（随机对话/系统提醒） */
+#speech-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 86px;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(12, 8, 22, .92);
+  border: 2px solid var(--line);
+  border-left: 4px solid var(--gold);
+  color: var(--cream);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 8px 14px;
+  max-width: min(88vw, 480px);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  z-index: 36;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.5);
+}
+#speech-bar.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width: 700px), (pointer: coarse) {
+  #speech-bar { bottom: 150px; font-size: 12px; }  /* 手机避开虚拟按键区 */
+}
+
+/* 斗地主选牌 */
+.pcard.sel {
+  border-color: var(--gold);
+  transform: translateY(-8px);
+  box-shadow: 0 0 0 2px var(--gold);
+  cursor: pointer;
+}
+.pcard { cursor: pointer; touch-action: manipulation; }
+#ddz-log { max-height: 110px; overflow-y: auto; font-size: 12px; }
+#ddz-hand { min-height: 58px; }
+#pong-board, #snake-board { display: block; margin: 8px auto; }
+
+/* ================= 手机横屏适配 ================= */
+@media (orientation: landscape) and (max-height: 560px) {
+  #hud { top: 4px; }
+  #hud .hud-chip { font-size: 11px; padding: 3px 8px; }
+  #hint { display: none; }
+  /* 画布尽量撑满高度 */
+  #game { border-width: 2px; }
+  /* 面板占满高度可滚动 */
+  .panel {
+    max-height: calc(100vh - 16px);
+    width: min(94vw, 420px);
+    padding: 10px 14px;
+    overflow-y: auto;
+  }
+  .game-screen { max-height: calc(100vh - 16px); overflow-y: auto; }
+  /* 触摸按钮收到角落更小，避免挡画面 */
+  #touch-dpad { left: 6px; bottom: 6px; }
+  #touch-actions { right: 6px; bottom: 6px; }
+  #touch-dpad { grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(2, 46px); }
+  #t-interact { width: 64px; height: 64px; }
+  #t-menu { width: 46px; height: 46px; }
+  #speech-bar { bottom: 120px; }
+  /* 游戏内界面横屏：牌面/按钮紧凑 */
+  .pcard { min-width: 34px; height: 46px; font-size: 12px; }
+  .pcard .suit { font-size: 14px; }
+  .pix-btn { padding: 8px 12px; font-size: 13px; }
+  .actions { gap: 5px; }
+}
+
+/* ================ 🆕 RPGUI 风格增强（2026-08-18） ================ */
+
+/* 打字光标 */
+.speech-typing::after {
+  content: "▌";
+  animation: blink 0.6s step-end infinite;
+  color: var(--gold);
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* 选择按钮（RPG 风格） */
+.rpg-choice {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,215,94,.25);
+  color: var(--cream);
+  padding: 8px 14px;
+  margin: 4px 0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  font-family: inherit;
+}
+.rpg-choice:hover {
+  background: rgba(255,215,94,.12);
+  border-color: var(--gold);
+  color: #fff;
+}
+.rpg-choice:first-child {
+  margin-top: 0;
+}
+
+/* 华丽的对话框（用于 overlay 面板） */
+.dialog-ornate {
+  background: linear-gradient(135deg, rgba(28,18,50,.98), rgba(18,10,36,.98));
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 30px rgba(255,215,94,.06), inset 0 0 40px rgba(255,215,94,.03);
+}
+.dialog-ornate h2 {
+  color: var(--gold);
+  text-align: center;
+  margin: 0 0 12px;
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+.dialog-ornate .ornate-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 12px 0;
+  opacity: .3;
+}
+
+/* ================ 🎮 RPGUI 风格（2026-08-19，参考 RPGUI 框架） ================ */
+
+/* RPG 风格按钮：像素浮雕效果 */
+.pix-btn {
+  position: relative;
+  font-family: inherit;
+  font-size: 12px;
+  color: #e8dcc8;
+  background: #3a2a58;
+  border: none;
+  border-image: none;
+  padding: 7px 16px;
+  cursor: pointer;
+  image-rendering: pixelated;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.5);
+  /* 3D 浮雕边框（纯 CSS，无图片） */
+  box-shadow:
+    inset -2px -2px 0 #1a0e30,
+    inset 2px 2px 0 #5a4a78,
+    0 0 0 2px #2a1a44;
+}
+.pix-btn:hover {
+  background: #4a3a68;
+  box-shadow:
+    inset -2px -2px 0 #2a1a40,
+    inset 2px 2px 0 #6a5a88,
+    0 0 0 2px #3a2a54;
+}
+.pix-btn:active {
+  background: #2a1a44;
+  box-shadow:
+    inset 2px 2px 0 #1a0e30,
+    inset -2px -2px 0 #4a3a68,
+    0 0 0 2px #2a1a44;
+  padding: 8px 16px 6px;
+}
+.pix-btn.small { padding: 4px 10px; font-size: 11px; }
+.pix-btn.small:active { padding: 5px 10px 3px; }
+.pix-btn.danger {
+  background: #4a1a1a;
+  box-shadow:
+    inset -2px -2px 0 #2a0a0a,
+    inset 2px 2px 0 #6a3a3a,
+    0 0 0 2px #3a1a1a;
+}
+.pix-btn.danger:hover { background: #5a2a2a; }
+.pix-btn.danger:active { background: #3a1010; }
+
+/* RPG 风格面板：framed 边框效果 */
+.panel {
+  background: linear-gradient(180deg, #1a1228, #0f0a1c);
+  border: 3px solid #4a3a6b;
+  border-image: none;
+  box-shadow:
+    0 0 0 1px #6a5a8b,
+    inset 0 0 0 1px #2a1a44,
+    0 0 30px rgba(60,40,100,.15);
+  padding: 16px 20px;
+  min-width: 320px;
+  max-width: min(92vw, 560px);
+  max-height: 84vh;
+  overflow-y: auto;
+  border-radius: 0;
+}
+.panel h2 {
+  color: #ffd75e;
+  font-size: 15px;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #4a3a6b;
+  text-shadow: 0 0 8px rgba(255,215,94,.15);
+}
+.panel .row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13px; color: #c8b88a; }
+.panel .row:nth-child(even) { background: rgba(255,255,255,.03); }
+.panel .row span:last-child { color: #e8dcc8; }
+.panel .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.panel p.flavor { font-size: 12px; color: #9a8fb8; line-height: 1.7; margin: 6px 0; }
+
+/* RPG 风格对话框 */
+.dialog {
+  max-width: 480px;
+  border: 3px solid #6a5a8b;
+  box-shadow:
+    0 0 0 1px #8a7aab,
+    inset 0 0 0 1px #3a2a5b,
+    0 0 40px rgba(80,60,140,.12);
+  border-radius: 0;
+}
+.dialog .npc { color: #ffd75e; font-weight: bold; }
+.dialog .text { font-size: 13px; line-height: 1.8; color: #e8dcc8; margin: 8px 0; }
+
+/* RPG 风格底部文本框 */
+#speech-box .speech-frame {
+  background: #120e20;
+  border: 3px solid #5a4a7b;
+  box-shadow:
+    0 0 0 1px #7a6a9b,
+    inset 0 0 0 1px #2a1a4b,
+    0 0 30px rgba(60,40,100,.12);
+  border-radius: 0;
+  border-width: 3px 0 0 0;
+}
+#speech-box .speech-name { color: #ffd75e; text-shadow: 0 0 8px rgba(255,215,94,.2); }
+#speech-box .speech-content { color: #e8dcc8; }
+
+/* RPG 风格 HUD 顶栏 */
+#hud {
+  background: linear-gradient(180deg, #1a1228, #0f0a1c);
+  border: 2px solid #3a2a5b;
+  box-shadow:
+    0 0 0 1px #5a4a7b,
+    inset 0 0 0 1px #1a0e30;
+  border-radius: 0;
+  padding: 6px 12px;
+}
+.hud-chip {
+  background: rgba(0,0,0,.4);
+  border: 1px solid #3a2a5b;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,.3);
+  border-radius: 0;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #c8b88a;
+}
+.hud-tag {
+  background: #120e20;
+  border: 1px solid #2a1a44;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #9a8fb8;
+}
+.pix-btn.small {
+  padding: 3px 8px;
+  font-size: 11px;
+}
