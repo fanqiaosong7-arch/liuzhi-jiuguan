@@ -688,6 +688,7 @@ button, .pcard { -webkit-touch-callout: none; }
       <span id="hud-diff" class="hud-tag" title="酒馆难度">难度 标准</span>
     </div>
     <div class="hud-right">
+      <button id="btn-inventory" class="pix-btn small" title="背包">🎒 背包</button>
       <button id="btn-ledger" class="pix-btn small" title="商人的账册（战绩/流水）">账册</button>
       <button id="btn-quit" class="pix-btn small danger" title="退出酒馆">退出</button>
     </div>
@@ -735,7 +736,7 @@ button, .pcard { -webkit-touch-callout: none; }
 var G = (typeof window !== "undefined") ? window : globalThis;
 
 /* 版本号：每次改动更新（web/ 目录实时生效，刷新即最新） */
-G.VERSION = "2026-08-21 16:29";
+G.VERSION = "2026-08-21 18:25";
 
 /* 随机 */
 G.rand = function (a, b) { return a + Math.random() * (b - a); };
@@ -1589,6 +1590,9 @@ function defaultProgress() {
     saplings: 0,              // 果苗袋数
     orchardPlanted: 0,        // 已种待挂果的果苗数
     orchardDay: 0,            // 挂果日（第几天）
+    inventory: [],            // 背包物品 id 列表（2026-08-21 物品系统）
+    scavengedRiver: false,    // 河边是否已拾取过（2026-08-21）
+    scavengedHouse: false,    // 精灵旧屋是否已搜寻过（2026-08-21）
   };
 }
 
@@ -2160,6 +2164,56 @@ function furnitureObjects(furnitureIds) {
   return out;
 }
 
+/* ---------- 物品/道具系统（2026-08-21） ---------- */
+/* 背包里的物品。icon 为 Tiny Dungeon 瓦片编号（见 assets/tiles/tiny-dungeon），
+ * ui.js 用 drawItemIcon 从瓦片切图显示；key 不用的物品可不渲染图标。 */
+var ITEMS = [
+  { id: "key",      name: "旧钥匙",   kind: "key",    icon: 85,  desc: "一把生锈的钥匙，可能是精灵旧屋后门的。", use: "unlock" },
+  { id: "potion",   name: "活血药水", kind: "potion", icon: 97,  mood: 20, desc: "柳溪村郎中的家传方子，喝了提神。", use: "mood" },
+  { id: "herb",     name: "野薄荷",   kind: "food",   icon: 114, mood: 8,  desc: "河边摘的，泡水喝能提神。", use: "mood" },
+  { id: "mushroom", name: "毒蘑菇",   kind: "mush",   icon: 115, mood: -15, desc: "看着鲜艳，别乱吃。（吃了会不舒服）", use: "mood" },
+  { id: "gem",      name: "蓝宝石",   kind: "gem",    icon: 118, value: 500, desc: "河底捞起来的，能卖不少钱。", use: "sell" },
+  { id: "coin",     name: "古铜币",   kind: "gem",    icon: 119, value: 100, desc: "精灵旧屋里翻出来的旧币。", use: "sell" },
+  { id: "sword",    name: "锈铁剑",   kind: "weapon", icon: 100, value: 200, desc: "锈迹斑斑，还能换点钱。", use: "sell" },
+  { id: "loveLetter","情书",        kind: "quest",  icon: 126, desc: "一封没写名字的信，字迹娟秀。", use: "quest" },
+];
+
+/* 物品 id 查找 */
+function itemInfo(id) {
+  for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].id === id) return ITEMS[i];
+  return null;
+}
+
+/* 背包操作方法（挂到 GS） */
+GS.addItem = function (p, id) {
+  if (!p.inventory) p.inventory = [];
+  if (p.inventory.indexOf(id) < 0) p.inventory.push(id);
+};
+GS.removeItem = function (p, id) {
+  if (!p.inventory) return;
+  var i = p.inventory.indexOf(id);
+  if (i >= 0) p.inventory.splice(i, 1);
+};
+GS.hasItem = function (p, id) {
+  return !!(p.inventory && p.inventory.indexOf(id) >= 0);
+};
+/* 使用物品：返回 {ok, msg} */
+GS.useItem = function (p, id) {
+  var it = itemInfo(id);
+  if (!it) return { ok: false, msg: "没有这东西。" };
+  if (it.use === "mood") {
+    GS.removeItem(p, id);
+    GS.addMood(p, it.mood || 0);
+    return { ok: true, msg: "你用了" + it.name + "，心情 " + (it.mood >= 0 ? "+" : "") + (it.mood || 0) + "。" };
+  }
+  if (it.use === "sell") {
+    GS.removeItem(p, id);
+    var dollars = (it.value || 0) / 100;
+    return { ok: true, msg: "你把" + it.name + "卖了 $" + dollars.toFixed(2) + "。" };
+  }
+  return { ok: false, msg: "这东西现在用不上。" };
+};
+
 /* ---------- 随机 NPC 闲谈台词池（按时段/心情/认同度引用） ---------- */
 var SMALLTALK = {
   boss: [
@@ -2643,6 +2697,8 @@ var GS_EXPORTS = {
   FARMLAND_MAX: FARMLAND_MAX, ORCHARD_LAND_PRICE: ORCHARD_LAND_PRICE,
   SAPLING_PRICE: SAPLING_PRICE, ORCHARD_HARVEST: ORCHARD_HARVEST,
   ORCHARD_DAYS: ORCHARD_DAYS, ORCHARD_MAX: ORCHARD_MAX, POND_COST: POND_COST,
+  ITEMS: ITEMS, itemInfo: itemInfo,
+  addItem: GS.addItem, removeItem: GS.removeItem, hasItem: GS.hasItem, useItem: GS.useItem,
 };
 Object.keys(GS_EXPORTS).forEach(function (k) { GS[k] = GS_EXPORTS[k]; });
 if (typeof module !== "undefined" && module.exports) module.exports = GS_EXPORTS;
@@ -4743,6 +4799,72 @@ var TILE_MAP = {
   roof:      [84, 85, 86],    // 屋顶（推测）
 };
 
+/* ================ 🆕 物品图标绘制（2026-08-21） ================
+ * 从 Tiny Dungeon 瓦片表切物品图标，画到背包面板。 */
+function itemIconCanvas(itemId) {
+  var canvas = document.createElement("canvas");
+  canvas.width = 16; canvas.height = 16;
+  var ctx = canvas.getContext("2d");
+  var it = null;
+  if (typeof GS !== "undefined" && GS.itemInfo) it = GS.itemInfo(itemId);
+  if (!it || it.icon === undefined) {
+    ctx.fillStyle = "#666";
+    ctx.fillRect(2, 2, 12, 12);
+    ctx.strokeStyle = "#888";
+    ctx.strokeRect(2, 2, 12, 12);
+    return canvas;
+  }
+  var tiles = TILES.loaded.dungeon;
+  if (!tiles || !tiles[it.icon]) {
+    ctx.fillStyle = "#777";
+    ctx.fillRect(3, 3, 10, 10);
+    return canvas;
+  }
+  ctx.drawImage(tiles[it.icon], 0, 0);
+  return canvas;
+}
+
+/** 物品图标转 <img> html（背包面板用） */
+function itemIconHTML(itemId, sizePx) {
+  var s = sizePx || 32;
+  var cv = itemIconCanvas(itemId);
+  return '<img src="' + cv.toDataURL() + '" style="width:' + s + 'px;height:' + s + 'px;image-rendering:pixelated;vertical-align:middle">';
+}
+
+/* ================ 🆕 物品图标绘制（增强版，兼容 Ubuntu TILESETS 系统） ================ */
+/* 从 Tiny Dungeon 瓦片表切物品图标，优先读 TILESETS["tiny-dungeon"]（Ubuntu 系统），
+ * 回退到 TILES.loaded.dungeon（本机系统）。 */
+function itemIconCanvas(itemId) {
+  var canvas = document.createElement("canvas");
+  canvas.width = 16; canvas.height = 16;
+  var ctx = canvas.getContext("2d");
+  var it = null;
+  if (typeof GS !== "undefined" && GS.itemInfo) it = GS.itemInfo(itemId);
+  if (!it || it.icon === undefined) {
+    ctx.fillStyle = "#666"; ctx.fillRect(2, 2, 12, 12);
+    ctx.strokeStyle = "#888"; ctx.strokeRect(2, 2, 12, 12);
+    return canvas;
+  }
+  // 瓦片来源：Ubuntu TILESETS["tiny-dungeon"] 或本机 TILES.loaded.dungeon（用 tiny-dungeon 数据）
+  var tile = null;
+  if (typeof TILESETS !== "undefined" && TILESETS["tiny-dungeon"]) {
+    tile = TILESETS["tiny-dungeon"][it.icon];
+  } else if (typeof TILES !== "undefined" && TILES.loaded["tiny-dungeon"]) {
+    tile = TILES.loaded["tiny-dungeon"][it.icon];
+  } else if (typeof TILES !== "undefined" && TILES.loaded.dungeon) {
+    tile = TILES.loaded.dungeon[it.icon];
+  }
+  if (tile) { ctx.drawImage(tile, 0, 0); return canvas; }
+  ctx.fillStyle = "#777"; ctx.fillRect(3, 3, 10, 10);
+  return canvas;
+}
+
+function itemIconHTML(itemId, sizePx) {
+  var s = sizePx || 32;
+  var cv = itemIconCanvas(itemId);
+  return '<img src="' + cv.toDataURL() + '" style="width:' + s + 'px;height:' + s + 'px;image-rendering:pixelated;vertical-align:middle">';
+}
+
 </script>
   <script>
 /* maps.js — 场景数据（二楼房间 / 一楼大厅）
@@ -4938,6 +5060,7 @@ SCENES.riverside = {
   objects: [
     { id: "fishing",   x: 8, y: 9, w: 1, h: 1, solid: false, label: "钓鱼", action: "fish" },
     { id: "mailbox",   x: 16, y: 9, w: 1, h: 1, solid: false, label: "邮筒 · 寄信", action: "send_letter" },
+    { id: "rr_items",  x: 5, y: 8, w: 1, h: 1, solid: false, label: "河滩上有东西在闪", action: "scavenge_riverside" },
     { id: "road_sign", x: 12, y: 1, w: 1, h: 1, solid: false, label: "回村", action: "goto_village_from" },
     { id: "tree",      x: 2, y: 3, w: 1, h: 1, solid: true },
     { id: "tree",      x: 21, y: 3, w: 1, h: 1, solid: true },
@@ -5046,6 +5169,7 @@ SCENES.oldhouse = {
     { id: "stool",     x: 13, y: 8, w: 1, h: 1, solid: true },
     { id: "basin",     x: 6, y: 9, w: 1, h: 1, solid: false, label: "接雨的盆", action: "flavor_leakyroof" },
     { id: "lantern",   x: 1, y: 5, w: 1, h: 1, solid: false },
+    { id: "oh_search", x: 17, y: 8, w: 1, h: 1, solid: false, label: "翻翻旧屋的角落", action: "scavenge_oldhouse" },
   ],
 };
 
@@ -5608,6 +5732,7 @@ var UI = {
   init: function () {
     this.overlay = document.getElementById("overlay");
     var self = this;
+    document.getElementById("btn-inventory").addEventListener("click", function () { self.inventoryPanel(); });
     document.getElementById("btn-ledger").addEventListener("click", function () { self.ledgerPanel(); });
     document.getElementById("btn-quit").addEventListener("click", function () { self.quitToTitle(); });
     document.getElementById("hud-wallet").addEventListener("click", function () { self.walletPanel(); });
@@ -6829,6 +6954,69 @@ var UI = {
         }
       });
     });
+  },
+
+  /* 🆕 背包面板（物品系统，2026-08-21） */
+  inventoryPanel: function () {
+    var self = this;
+    var w = Wallet.load();
+    var p = GS.load(w);
+    var inv = p.inventory || [];
+    if (!inv.length) {
+      var emptyHtml = '<div class="panel"><h2>🎒 背包</h2>' +
+        '<p class="flavor">背包空空的。到村里走走，河边、旧屋、果园里说不定能捡到东西。</p>' +
+        '<div class="actions"><button class="pix-btn" id="inv-close">收好</button></div></div>';
+      this.open(emptyHtml);
+      document.getElementById("inv-close").addEventListener("click", function () { self.close(); });
+      return;
+    }
+    var rows = '<p class="flavor">你带着这些家当：</p>';
+    inv.forEach(function (id) {
+      var it = GS.itemInfo(id);
+      if (!it) return;
+      var imgHtml = typeof itemIconHTML === "function" ? itemIconHTML(id, 32) : "";
+      rows += '<div class="row" style="align-items:center">' +
+        imgHtml + '<span style="margin-left:8px"><b>' + it.name + '</b>' +
+        '<br><small style="color:var(--dim)">' + it.desc + '</small></span>' +
+        (it.use === "mood" || it.use === "sell" ?
+          '<button class="pix-btn small" data-use="' + id + '">' + (it.use === "sell" ? "卖掉" : "使用") + '</button>' : '') +
+        '</div>';
+    });
+    var html = '<div class="panel"><h2>🎒 背包</h2>' + rows +
+      '<div class="actions"><button class="pix-btn" id="inv-close">收好</button></div></div>';
+    this.open(html);
+    inv.forEach(function (id) {
+      var btn = document.querySelector('[data-use="' + id + '"]');
+      if (btn) btn.addEventListener("click", function () { self.useInventoryItem(id); });
+    });
+    document.getElementById("inv-close").addEventListener("click", function () { self.close(); });
+  },
+
+  /* 使用/出售背包物品 */
+  useInventoryItem: function (id) {
+    var self = this;
+    var w = Wallet.load();
+    var p = GS.load(w);
+    var it = GS.itemInfo(id);
+    if (!it) return;
+    if (it.use === "sell") {
+      GS.removeItem(p, id);
+      w.settle((it.value || 0) / 100, "item", "卖了" + it.name);
+      w.save();
+      this.updateHud();
+      UI.dialog("🎒 " + it.name, ["你将" + it.name + "出手，得了 $" + ((it.value || 0) / 100).toFixed(2) + "。"],
+        [{ label: "好", act: "ok", fn: function () { self.inventoryPanel(); } }]);
+    } else if (it.use === "mood") {
+      GS.removeItem(p, id);
+      GS.addMood(p, it.mood || 0);
+      w.save();
+      this.updateHud();
+      UI.dialog("🎒 " + it.name, ["你用了" + it.name + "，心情 " + (it.mood >= 0 ? "+" : "") + (it.mood || 0) + "。"],
+        [{ label: "好", act: "ok", fn: function () { self.inventoryPanel(); } }]);
+    } else {
+      UI.dialog("🎒 " + it.name, [it.desc, "这物品现在派不上用场。"],
+        [{ label: "好", act: "ok", fn: function () { self.inventoryPanel(); } }]);
+    }
   },
 
   /* 🆕 预加载精灵表：遍历 CHARS 键，自动加载 assets/characters/{key}.png */
@@ -9244,6 +9432,46 @@ G.ACTIONS = {
 
   flavor_sign: function () {
     UI.say("招牌", "“柳枝酒馆”的招牌在夜色里轻轻摇晃，♠♥♦♣ 的刻痕若隐若现。");
+  },
+
+  /* 河边拾取（2026-08-21 物品系统） */
+  scavenge_riverside: function () {
+    var w = Wallet.load();
+    var p = GS.load(w);
+    // 已捡过就不重复
+    if (p.scavengedRiver) {
+      UI.say("河滩", "这一片已经翻遍了，没什么值得再捡的。");
+      return;
+    }
+    p.scavengedRiver = true;
+    // 随机掉落：宝石/薄荷/古币
+    var pool = ["gem", "herb", "coin"];
+    var got = pool[Math.floor(Math.random() * pool.length)];
+    var it = GS.itemInfo(got);
+    GS.addItem(p, got);
+    w.save();
+    UI.dialog("💎 河滩拾物", ["你在河滩的卵石间摸到一件东西——" + it.name + "：" + it.desc,
+      "这记进你的背包了。"],
+      [{ label: "收好", act: "ok", fn: function () { UI.inventoryPanel(); } }]);
+  },
+
+  /* 精灵旧屋搜寻 */
+  scavenge_oldhouse: function () {
+    var w = Wallet.load();
+    var p = GS.load(w);
+    if (p.scavengedHouse) {
+      UI.say("旧屋", "这屋角你早翻遍了，只剩灰。");
+      return;
+    }
+    p.scavengedHouse = true;
+    var pool = ["coin", "loveLetter", "herb"];
+    var got = pool[Math.floor(Math.random() * pool.length)];
+    var it = GS.itemInfo(got);
+    GS.addItem(p, got);
+    w.save();
+    UI.dialog("🔍 旧屋搜寻", ["你蹲身翻开墙角的木板——底下压着一件东西：" + it.name + "。" + it.desc,
+      "已放进背包。"],
+      [{ label: "收好", act: "ok", fn: function () { UI.inventoryPanel(); } }]);
   },
 };
 
