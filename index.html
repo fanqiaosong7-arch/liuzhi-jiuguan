@@ -735,7 +735,7 @@ button, .pcard { -webkit-touch-callout: none; }
 var G = (typeof window !== "undefined") ? window : globalThis;
 
 /* 版本号：每次改动更新（web/ 目录实时生效，刷新即最新） */
-G.VERSION = "2026-08-19 12:49";
+G.VERSION = "2026-08-21 16:29";
 
 /* 随机 */
 G.rand = function (a, b) { return a + Math.random() * (b - a); };
@@ -4576,6 +4576,54 @@ function drawLPCPortrait(ctx, charKey, canvas, scale) {
   canvas.style.height = (64 * s) + "px";
 }
 
+/* ================ 🏛 瓦片贴图系统（Kenney Tiny Town/Dungeon，2026-08-19） ================ */
+
+var TILESETS = {};  // {name: [canvas, canvas, ...]}
+
+/** 加载 tilemap_packed.png 并切成 16×16 瓦片数组 */
+function loadTileset(name, url) {
+  var img = new Image();
+  img.onload = function () {
+    var tw = 16, th = 16;
+    var cols = img.width / tw, rows = img.height / th;
+    var tiles = [];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var cv = document.createElement("canvas");
+        cv.width = tw; cv.height = th;
+        var ctx = cv.getContext("2d");
+        ctx.drawImage(img, c * tw, r * th, tw, th, 0, 0, tw, th);
+        tiles.push(cv);
+      }
+    }
+    TILESETS[name] = tiles;
+    console.log("tileset '" + name + "' loaded: " + tiles.length + " tiles");
+  };
+  img.onerror = function () { console.warn("tileset '" + name + "' load failed:", url); };
+  img.src = url;
+}
+
+/** 取瓦片 canvas */
+function getTile(name, idx) {
+  var ts = TILESETS[name];
+  if (!ts || !ts[idx]) return null;
+  return ts[idx];
+}
+
+/* 场景瓦片映射表（独立于 maps.js，2026-08-19）
+ * 每个场景的字符→瓦片索引映射 */
+var SCENE_TILE_MAP = {
+  room:     {tileSet:"town",        map:{"#":6,  ".":12}},
+  lobby:    {tileSet:"town",        map:{"#":96, ".":12}},
+  village:  {tileSet:"town",        map:{"#":6,  ".":0}},
+  riverside:{tileSet:"town",        map:{"#":6,  ".":0}},
+  farmland: {tileSet:"town",        map:{"#":6,  ".":0}},
+  orchard:  {tileSet:"town",        map:{"#":6,  ".":0}},
+  chapel:   {tileSet:"tiny-dungeon", map:{"#":0,  ".":36}},
+  manor:    {tileSet:"town",        map:{"#":6,  ".":0}},
+  oldhouse: {tileSet:"town",        map:{"#":44, ".":12}},
+};
+
 /** 🆕 绘制 LPC 大头像（仅头部+发型，裁切放大） */
 function drawLPCHeadshot(ctx, charKey, canvas, scale) {
   if (!LPC.ready) {
@@ -5333,11 +5381,27 @@ var Engine = {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // 地面与墙
+    // 地面与墙（优先瓦片贴图，回退到程序化绘制）
+    var sceneName = this.scene.name === "二楼 · 我的房间" ? "room" :
+      this.scene.name === "一楼 · 柳枝酒馆" ? "lobby" :
+      this.scene.name === "村口 · 户外" ? "village" :
+      this.scene.name === "小河边" ? "riverside" :
+      this.scene.name === "村边农地" ? "farmland" :
+      this.scene.name === "河西果园" ? "orchard" :
+      this.scene.name === "密林小教堂" ? "chapel" :
+      this.scene.name === "庄园前" ? "manor" :
+      this.scene.name === "精灵旧屋" ? "oldhouse" : "";
+    var tileCfg = (typeof SCENE_TILE_MAP !== "undefined") ? SCENE_TILE_MAP[sceneName] : null;
+    var tileSet = tileCfg ? tileCfg.tileSet : "";
+    var tileMap = tileCfg ? tileCfg.map : {};
     for (var y = 0; y < sc.h; y++) {
       for (var x = 0; x < sc.w; x++) {
         var c = sc.grid[y].charAt(x);
-        if (c === "#") {
+        var tileIdx = tileMap[c] !== undefined ? tileMap[c] : -1;
+        var tile = (tileSet && tileIdx >= 0) ? getTile(tileSet, tileIdx) : null;
+        if (tile) {
+          ctx.drawImage(tile, x * T, y * T);
+        } else if (c === "#") {
           if (sc.floor === "grass") drawBush(ctx, x, y);
           else drawWall(ctx, x, y);
         } else if (c === "~") drawRiver(ctx, x, y);
@@ -9220,8 +9284,8 @@ function boot() {
     console.log("LPC 角色组件已就绪");
   });
   // 加载 Kenney 瓦片包（场景贴图）
-  loadTilePack("town");
-  loadTilePack("dungeon");
+  loadTileset("town", "assets/tiles/town/Tilemap/tilemap_packed.png");
+  loadTileset("tiny-dungeon", "assets/tiles/tiny-dungeon/Tilemap/tilemap_packed.png");
   Engine.init();
   var w = Wallet.load();
   GS.init(w);                     // 进度系统（时间/心情/家具/名字）初始化
